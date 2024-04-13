@@ -8,6 +8,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tester", "Tester\Tester.csproj", "{2FCA7EA4-B6A5-4DC2-88ED-64E7C780A58F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Inject", "Inject\Inject.vcxproj", "{B146AB03-6753-42E6-AEDF-B6F6E0787ED7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A2CE153A-01C7-498F-95A6-EE551A5FFA5E} = {A2CE153A-01C7-498F-95A6-EE551A5FFA5E}
+		{2FCA7EA4-B6A5-4DC2-88ED-64E7C780A58F} = {2FCA7EA4-B6A5-4DC2-88ED-64E7C780A58F}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
