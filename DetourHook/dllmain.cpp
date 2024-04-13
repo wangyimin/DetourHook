@@ -35,9 +35,12 @@ HANDLE WINAPI hookedCreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD
 	DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
 	LPWSTR redirect = new TCHAR[1000];
-	GetRedirectPath(lpFileName, redirect);
+	if (wcsstr(lpFileName, L"D:\\Wang"))
+		GetRedirectPath(lpFileName, redirect);
+	else
+		wsprintfW(redirect, L"%s", lpFileName);
 	return oCreateFileW(
-		redirect, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+			redirect, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 }
 
 BOOL APIENTRY DllMain( HMODULE hModule,
