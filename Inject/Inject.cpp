@@ -4,26 +4,29 @@
 #include <iostream>
 #include <windows.h>
 #include <tlhelp32.h>
+#include <comdef.h>
+
+using namespace std;
 
 int findProcessID(wchar_t processName[]);
 
 
-int main()
+int wmain(int argc, wchar_t* argv[])
 {
 	// Declare a wchar_t array to put process name.
-	wchar_t processName[100] = L"Tester.exe";
+	//wchar_t processName[100] = L"Tester.exe";
+	wchar_t* processName= argv[1];
 
-	// Get the PID.
-	printf("1. Get the process ID\n");
+	printf("1. Get specified process id\n");
 	int pid = findProcessID(processName);
-	if (pid < 0) {
+	if (pid < 0)
+	{
 		printf("\t[FAILURE]  Not found the process \"%ls\".\n", processName);
 		system("PAUSE");
 		return 0;
 	}
 	printf("\t[SUCCESS]  The process \"%ls\" is found. And PID is %d.\n", processName, pid);
 
-	// Get the right to operate in target.
 	printf("2. Get the handle to the process\n");
 	HANDLE pHandle = OpenProcess(
 		PROCESS_CREATE_THREAD |        // Permission to create threads
@@ -33,16 +36,18 @@ int main()
 		PROCESS_VM_WRITE,              // Permission to write the memory in the process. (WriteProcessMemory can be used.)
 		false, pid);
 	if (pHandle == NULL) {
-		printf("\t[FAILURE]  Doesn't obtain the handle to the process (%ls, %d).\n", processName, pid);
+		printf("\t[FAILURE]  Unable to obtain the handle to the process (%ls, %d).\n", processName, pid);
 		system("PAUSE");
 		return 0;
 	}
-	printf("\t[SUCCESS]  The handle to the process (%ls, %d)  is 0x%08X.\n", processName, pid, pHandle);
+	printf("\t[SUCCESS]  The handle to the process (%ls, %d)  is 0x%p.\n", processName, pid, pHandle);
 
-	// Allocate the memory for the injected dll name in process.
 	printf("3. Allocate the memory for the dll path\n");
 	// Use full path to dll.
-	const char *dllPath = "D:\\Wang\\github\\DetourHook\\Debug\\DetourHook.dll";
+	//const char *dllPath = "D:\\Wang\\github\\DetourHook\\Debug\\DetourHook.dll";
+	_bstr_t b(argv[2]);
+	const char *dllPath = b;
+
 	LPVOID dllAddr = VirtualAllocEx(
 		pHandle,                    // The handle to a process.
 		NULL,                       // The pointer that specifies a desired starting address for the region of pages.
@@ -50,13 +55,12 @@ int main()
 		MEM_RESERVE | MEM_COMMIT,   // Allocation type.
 		PAGE_EXECUTE_READWRITE);    // The memory protection for the region of pages to be allocated.
 	if (dllAddr == NULL) {
-		printf("\t[FAILURE]  Allocate memory failed.\n");
+		printf("\t[FAILURE]  Unable to allocate memory.\n");
 		system("PAUSE");
 		return 0;
 	}
-	printf("\t[SUCCESS]  Successfully allocate memory at 0x%08X.\n", dllAddr);
+	printf("\t[SUCCESS]  Successfully allocate memory at 0x%p.\n", dllAddr);
 
-	// Write the dll path to the memory just allocated.
 	printf("4. Write the dll path to the memory\n");
 	// WriteProcessMemory(
 	//	pHandle,         // The handle to a process.
@@ -65,7 +69,7 @@ int main()
 	//	strlen(dllPath), // The number of bytes to be written to the specified process.
 	//	NULL)            // If this is NULL, the parameter is ignored.
 	if (WriteProcessMemory(pHandle, dllAddr, dllPath, strlen(dllPath), NULL) == FALSE) {
-		printf("\t[FAILURE]  Failed to write the dll path into memory.\n");
+		printf("\t[FAILURE]  Unable to write the dll path into memory.\n");
 		system("PAUSE");
 		return 0;
 	}
@@ -84,7 +88,7 @@ int main()
 		system("PAUSE");
 		return 0;
 	}
-	printf("\t[SUCCESS]  LoadLibraryA is found at 0x%08X.\n", loadLibraryAAddr);
+	printf("\t[SUCCESS]  LoadLibraryA is found at 0x%p.\n", loadLibraryAAddr);
 
 	// Create remote thread in the target!!
 	printf("6. Create remote thread\n");
@@ -101,12 +105,13 @@ int main()
 		system("PAUSE");
 		return 0;
 	}
-	printf("\t[SUCCESS]  The handle to the remote thread is 0x%08X.\n", remoteThreadHandle);
+	printf("\t[SUCCESS]  The handle to the remote thread is 0x%p.\n", remoteThreadHandle);
 
+	CloseHandle(pHandle);
+	VirtualFreeEx(pHandle, remoteThreadHandle, NULL, MEM_RELEASE);
 
 	system("PAUSE");
 	return 0;
-
 }
 
 int findProcessID(wchar_t processName[]) {
